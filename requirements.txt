@@ -1,0 +1,23 @@
+# Dependencias base con versiones exactas (seccion 3.14 de la metodologia).
+# Para ejecutar Flower Simulation Runtime en WSL/Linux, instalar ademas
+# requirements-flower-wsl.txt.
+#
+# Instalacion:
+#   python -m venv venv
+#   venv\Scripts\activate
+#   pip install -r requirements.txt
+#
+# Para una maquina sin GPU NVIDIA, sustituir las dos primeras lineas de
+# paquetes por: torch==2.12.0  y  torchvision==0.27.0  (wheels de PyPI, CPU).
+#
+--extra-index-url https://download.pytorch.org/whl/cu126
+torch==2.12.0+cu126
+torchvision==0.27.0+cu126
+numpy==2.4.4
+pandas==3.0.3
+scikit-learn==1.9.0
+matplotlib==3.10.9
+PyYAML==6.0.3
+tqdm==4.68.2
+pytest==9.0.3
+tabulate==0.10.0

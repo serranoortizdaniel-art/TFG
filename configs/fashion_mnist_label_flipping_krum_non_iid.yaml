@@ -1,0 +1,14 @@
+# Escenario E4 (criterio de exito de la hoja de ruta):
+# label flipping con 20% de maliciosos, defensa Krum, particion non-IID.
+dataset: fashion_mnist
+partition_type: dirichlet
+dirichlet_alpha: 0.5
+attack_type: label_flipping
+malicious_fraction: 0.2
+attack_params:
+  flip_mode: all_to_next
+aggregator: krum
+aggregator_params:
+  policy: fixed
+  krum_f: 3
+seed: 42

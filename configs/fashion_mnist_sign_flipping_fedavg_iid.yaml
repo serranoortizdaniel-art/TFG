@@ -1,0 +1,10 @@
+# Escenario E3: sign flipping (envenenamiento de modelo) con 20% de
+# maliciosos contra FedAvg sin defensa, particion IID.
+dataset: fashion_mnist
+partition_type: iid
+attack_type: sign_flipping
+malicious_fraction: 0.2
+attack_params:
+  gamma: 1.0
+aggregator: fedavg
+seed: 42

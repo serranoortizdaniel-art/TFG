@@ -1,0 +1,53 @@
+# Entornos locales
+venv/
+.venv/
+env/
+.env/
+.env.*
+!.env.example
+
+# Python: caches, bytecode y empaquetado
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# IDEs y sistema operativo
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Datos descargados y artefactos pesados del experimento
+data/
+datasets/
+checkpoints/
+models/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Resultados generados por ejecuciones y analisis
+results/
+plots/
+*.log
+*.pid
+
+# Artefactos temporales de notebooks y ejecucion
+.ipynb_checkpoints/
+ray_results/
+wandb/
+mlruns/
+
+# Configuraciones generadas automaticamente
+configs/generated/

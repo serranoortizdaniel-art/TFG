@@ -1,0 +1,8 @@
+# Linea base federada (escenario E0 con Fashion-MNIST):
+# sin ataque, FedAvg, particion IID.
+dataset: fashion_mnist
+partition_type: iid
+attack_type: none
+malicious_fraction: 0.0
+aggregator: fedavg
+seed: 42

@@ -1,0 +1,25 @@
+# Validacion corta de Flower con ataque y defensa robusta.
+experiment_name: debug_flower_sign_krum
+dataset: mnist
+num_clients: 4
+num_rounds: 2
+local_epochs: 1
+batch_size: 64
+partition_type: iid
+attack_type: sign_flipping
+malicious_fraction: 0.25
+attack_params:
+  gamma: 1.0
+aggregator: krum
+aggregator_params:
+  policy: fixed
+  krum_f: 1
+seed: 42
+device: cpu
+flower:
+  client_device: cpu
+  num_cpus: 2.0
+  num_gpus: 0.0
+  ray_init_args:
+    include_dashboard: false
+    num_cpus: 4

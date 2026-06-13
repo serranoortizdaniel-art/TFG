@@ -1,0 +1,9 @@
+# Configuracion rapida de depuracion sobre MNIST (dataset de validacion):
+# pocas rondas para comprobar que el entorno funciona de extremo a extremo.
+dataset: mnist
+partition_type: iid
+attack_type: none
+malicious_fraction: 0.0
+aggregator: fedavg
+num_rounds: 5
+seed: 42

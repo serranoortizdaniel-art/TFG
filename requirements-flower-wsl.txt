@@ -1,0 +1,6 @@
+# Dependencias para ejecutar el entorno federado Flower en WSL/Linux.
+# Usar desde Ubuntu/WSL:
+#   ~/.venvs/pfg-flower/bin/python3 -m pip install -r requirements-flower-wsl.txt
+
+-r requirements.txt
+flwr[simulation]==1.31.0

@@ -1,0 +1,76 @@
+# ============================================================================
+# Configuracion de ejemplo COMENTADA con todos los parametros disponibles.
+# Cualquier parametro omitido toma el valor por defecto (src/utils/config.py).
+# La configuracion efectiva completa se guarda junto a los resultados.
+# ============================================================================
+
+# --- Identificacion y salida -------------------------------------------------
+experiment_name: null        # null -> nombre automatico a partir de la config
+output_dir: results/raw      # carpeta raiz de resultados brutos
+seed: 42                     # controla TODA la aleatoriedad del experimento
+
+# --- Dataset -----------------------------------------------------------------
+dataset: fashion_mnist       # mnist | fashion_mnist | cifar10
+data_dir: data               # cache local de los datasets
+
+# --- Configuracion federada (variables controladas, seccion 3.8) -------------
+num_clients: 10              # clientes con participacion completa
+num_rounds: 30               # rondas federadas
+local_epochs: 1              # epocas locales por ronda
+batch_size: 64
+learning_rate: 0.01          # SGD local
+momentum: 0.9
+weight_decay: 0.0
+eval_batch_size: 512         # batch de la evaluacion centralizada
+
+# --- Particionado (seccion 3.10) ---------------------------------------------
+partition_type: dirichlet    # iid | dirichlet
+dirichlet_alpha: 0.5         # 0.5 = non-IID moderado; 0.1 = fuerte (opcional)
+min_partition_size: 10       # minimo de muestras por cliente en dirichlet
+
+# --- Ataque (secciones 3.7 y 3.8) --------------------------------------------
+attack_type: label_flipping  # none | label_flipping | sign_flipping | scaling
+malicious_fraction: 0.2      # fraccion de clientes controlados por el adversario
+attack_params:
+  # label_flipping:
+  flip_mode: all_to_next     # all_to_next: c -> (c+1) mod C (politica de la matriz)
+                             # targeted: source_class -> target_class
+  source_class: 0            # solo para flip_mode: targeted
+  target_class: 6            #   (en Fashion-MNIST: T-shirt/top -> Shirt)
+  flip_fraction: 1.0         # fraccion de muestras candidatas que se modifican
+  # sign_flipping: delta -> -gamma * delta
+  gamma: 1.0
+  # scaling: delta -> scale_factor * delta
+  scale_factor: 10.0
+
+# --- Agregacion (seccion 3.9) -------------------------------------------------
+aggregator: krum             # fedavg | median | trimmed_mean | krum
+aggregator_params:
+  policy: fixed              # fixed: cota conservadora constante (principal)
+                             # oracle: f y beta exactos segun el ataque real
+  krum_f: 3                  # f de Krum con politica fixed (K=10 -> f=3)
+  trim_beta: 0.3             # beta de TrimmedMean con politica fixed
+
+# --- Ejecucion -----------------------------------------------------------------
+device: cpu                  # cpu | cuda | auto; servidor/evaluacion centralizada
+save_model: false            # guardar model_final.pt junto a los resultados
+log_update_norms: true       # registrar la norma de cada actualizacion local
+
+# --- Flower Simulation Runtime -------------------------------------------------
+flower:
+  client_device: cpu         # cpu | cuda | auto; entrenamiento de clientes
+  num_cpus: 2.0              # recursos Ray solicitados por cliente virtual
+  num_gpus: 0.0
+  ray_init_args:
+    include_dashboard: false
+    num_cpus: 4              # limita concurrencia para evitar OOM en WSL
+
+# Perfil recomendado para RTX 3050/3050 Ti de 4 GB si se quieren clientes en GPU:
+# device: cuda
+# flower:
+#   client_device: cuda
+#   num_cpus: 4.0
+#   num_gpus: 1.0            # fuerza un unico actor Ray usando la GPU
+#   ray_init_args:
+#     include_dashboard: false
+#     num_cpus: 4

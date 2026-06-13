@@ -1,0 +1,14 @@
+# Experimento complementario: label flipping DIRIGIDO (T-shirt/top -> Shirt)
+# para el analisis de la matriz de confusion origen->destino (seccion 3.13).
+# La matriz principal usa flip_mode: all_to_next (politica constante).
+dataset: fashion_mnist
+partition_type: iid
+attack_type: label_flipping
+malicious_fraction: 0.2
+attack_params:
+  flip_mode: targeted
+  source_class: 0   # T-shirt/top
+  target_class: 6   # Shirt
+  flip_fraction: 1.0
+aggregator: fedavg
+seed: 42
