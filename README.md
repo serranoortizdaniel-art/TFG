@@ -108,7 +108,7 @@ El nombre canónico de cada ejecución se construye con sus factores (`fashion_m
 | `label_flipping` (`flip_mode=all_to_next`) | datos | flip c→(c+1) mod C al 100 % | ✔ |
 | `label_flipping` (`flip_mode=targeted`) | datos | `source_class`, `target_class`, `flip_fraction` | ✘ |
 | `sign_flipping` | modelo | `gamma` (Δ → −γΔ) | ✔ (γ=1) |
-| `scaling` | modelo | `scale_factor` (Δ → kΔ) | ✘ |
+| `scaling` | modelo | `scale_factor` (Δ → kΔ) | ✔ (k=10; 20 % y 30 %) |
 
 | Agregador | Regla | Parámetros |
 |---|---|---|
@@ -117,20 +117,24 @@ El nombre canónico de cada ejecución se construye con sus factores (`fashion_m
 | `trimmed_mean` | media recortando los β·K valores extremos por coordenada | `trim_beta` |
 | `krum` | selecciona la actualización con menor suma de distancias a sus K−f−2 vecinos | `krum_f` |
 
-Con `policy: fixed` los parámetros de defensa usan una cota conservadora constante (`krum_f=3`, `trim_beta=0.3` para K=10); con `policy: oracle` se ajustan a la fracción real de maliciosos de cada escenario.
+Con `policy: fixed` los parámetros de defensa usan una cota conservadora constante (`krum_f=3`, `trim_beta=0.3` para K=10); con `policy: oracle` se ajustan a la fracción real de maliciosos de cada escenario. La malla principal ejecuta la política fija con los cuatro agregadores y añade la política *oracle* para Krum y Trimmed Mean, las dos defensas que dependen de estos parámetros.
 
-Las variantes marcadas con ✘ (flip dirigido y *scaling*), la política `oracle`, CIFAR-10 y escenarios más agresivos (p. ej. `malicious_fraction=0.4`, `dirichlet_alpha=0.1`, `num_clients=20`) están implementadas y listas para usar vía configuración, aunque no forman parte de la malla que lanza `run_all.py`:
+La variante marcada con ✘ (*flip* dirigido), el soporte de CIFAR-10 y escenarios alternativos como `dirichlet_alpha=0.1` o `num_clients=20` están implementados y listos para usar vía configuración, aunque no forman parte de la malla que lanza `run_all.py`. La malla sí incluye *scaling*, la política `oracle` y fracciones de maliciosos de hasta el 40 %:
 
 ```bash
-# Ejemplo: scaling x10 al 30 % contra Trimmed Mean en non-IID
+# Ejemplo manual: scaling x10 al 30 % contra Trimmed Mean oracle en non-IID
 ~/.venvs/pfg-flower/bin/python3 run_experiment.py --config configs/base_fedavg_iid_fmnist.yaml \
     --override attack_type=scaling attack_params.scale_factor=10.0 malicious_fraction=0.3 \
-    partition_type=dirichlet aggregator=trimmed_mean
+    partition_type=dirichlet aggregator=trimmed_mean aggregator_params.policy=oracle
 ```
 
 ## Ejecución por lotes
 
-`run_all.py` genera y ejecuta la malla completa: 2 particiones × 4 agregadores × (1 escenario limpio + 2 ataques × 3 fracciones de maliciosos) × 3 semillas (42, 123, 2024) = **168 ejecuciones** sobre Fashion-MNIST.
+`run_all.py` genera y ejecuta la matriz completa sobre Fashion-MNIST. Para cada par (partición, agregador) evalúa once escenarios: uno sin ataque, *label flipping* y *sign flipping* con 10 %, 20 %, 30 % y 40 % de clientes maliciosos, y *scaling* con 20 % y 30 %. Esto produce:
+
+- **88 configuraciones con política fija**: 2 particiones × 4 agregadores × 11 escenarios.
+- **44 configuraciones adicionales con política oracle**: 2 particiones × 2 agregadores parametrizados × 11 escenarios.
+- **132 configuraciones y 396 ejecuciones** al repetir cada una con las semillas 42, 123 y 2024.
 
 ```bash
 ~/.venvs/pfg-flower/bin/python3 run_all.py --dry-run        # imprime el plan sin ejecutar
@@ -179,9 +183,9 @@ Cada ejecución crea `results/raw/<experimento>/seed_<n>/`:
 
 `run_analysis.py` lee todo lo disponible en `results/raw/` y produce:
 
-- `results/processed/`: métricas de todas las rondas en formato largo y resumen final con media ± σ por configuración y degradación frente a dos referencias (FedAvg limpio y el mismo agregador limpio).
-- `plots/`: curvas de accuracy y loss (media con banda de desviación entre semillas y línea base limpia), matrices de confusión promediadas, normas benignos/maliciosos por ronda y distribución de clases por cliente.
-- `results/processed/tables/`: tablas comparativas en LaTeX y Markdown.
+- `results/processed/`: métricas de todas las rondas en formato largo y resumen final con media ± σ por configuración y política, además de la degradación frente a dos referencias (FedAvg limpio y el mismo agregador limpio con la misma política).
+- `plots/`: curvas de accuracy y loss para la política fija (media con banda de desviación entre semillas y línea base limpia), matrices de confusión promediadas, normas benignos/maliciosos por ronda y distribución de clases por cliente.
+- `results/processed/tables/`: tablas comparativas en LaTeX y Markdown, separadas entre política fija y *oracle*.
 
 Los módulos de `src/analysis/` también funcionan por separado (`python -m src.analysis.plot_accuracy`, etc.). Los CSV se vuelcan a disco al final de cada ronda: una ejecución interrumpida conserva todas las rondas completadas.
 
@@ -201,7 +205,7 @@ Una única semilla por configuración controla la inicialización del modelo, el
 
 Validado en Windows 11 + WSL2 Ubuntu 24.04, Python 3.12.3, Flower 1.31.0, Ray 2.55.1, PyTorch 2.12.0+cu126, NVIDIA RTX 3050 Ti Laptop (4 GB).
 
-- Malla completa (168 ejecuciones × 30 rondas, perfil GPU conservador): **~3.9 h** de pared, ~84 s por ejecución, ~2.6 s por ronda.
+- Matriz completa (396 ejecuciones × 30 rondas, perfil GPU conservador): **~9.7 h** de pared, ~88 s por ejecución, ~2.8 s por ronda.
 - Coste medio de la agregación: 26 ms (FedAvg), 32 ms (Trimmed Mean), 62 ms (mediana), 97 ms (Krum).
 - Validaciones Flower sobre MNIST (4 clientes, 2 rondas): ~45 s en CPU.
 

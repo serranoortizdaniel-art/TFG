@@ -20,8 +20,15 @@ from src.analysis.common import (AGGREGATOR_COLORS, AGGREGATOR_LABELS,
 def plot_metric_curves(rounds, metric: str, ylabel: str, output_dir: str,
                        prefix: str) -> int:
     """Una figura por (dataset, particion, ataque, fraccion) con una curva
-    por agregador. Devuelve el numero de figuras generadas."""
+    por agregador. Devuelve el numero de figuras generadas.
+
+    Las curvas se trazan para la politica de defensa fija, la principal del
+    estudio; la comparacion cuantitativa con la politica oracle se presenta en
+    las tablas y no como curvas adicionales, para no duplicar cada figura.
+    """
     count = 0
+    if "policy" in rounds.columns:
+        rounds = rounds[rounds["policy"] == "fixed"]
     scenarios = rounds[rounds["attack"] != "none"][
         ["dataset", "partition", "attack", "malicious_pct"]].drop_duplicates()
     for _, scenario in scenarios.iterrows():

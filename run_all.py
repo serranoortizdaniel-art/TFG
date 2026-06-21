@@ -3,9 +3,10 @@
 Genera todas las configuraciones del nucleo experimental (seccion 3.12):
 
   particiones   : IID y Dirichlet alpha=0.5
-  ataques       : sin ataque, label flipping y sign flipping
-  maliciosos    : 10%, 20%, 30% (0% en los escenarios sin ataque)
+  ataques       : sin ataque, label flipping, sign flipping y scaling
+  maliciosos    : 10%, 20%, 30% y 40% (0% sin ataque; scaling al 20% y 30%)
   agregadores   : FedAvg, mediana coordinada, Trimmed Mean, Krum
+  politicas     : fija (todos los agregadores) y oracle (Krum y Trimmed Mean)
   semillas      : 42, 123, 2024 (3 en el nucleo, seccion 3.11)
 
 y las ejecuta secuencialmente, omitiendo las que ya estan completadas
@@ -40,9 +41,17 @@ from src.utils.config import DEFAULTS, _deep_merge, experiment_name
 CORE_SEEDS = [42, 123, 2024]
 PARTITIONS = [("iid", None), ("dirichlet", 0.5)]
 AGGREGATORS = ["fedavg", "median", "trimmed_mean", "krum"]
-ATTACKS = [("none", 0.0)] + [(attack, frac)
-                             for attack in ("label_flipping", "sign_flipping")
-                             for frac in (0.1, 0.2, 0.3)]
+# Ataques del nucleo: label flipping y sign flipping en cuatro fracciones
+# crecientes (hasta el 40%, que rebasa el supuesto K > 2f+2 de Krum), mas el
+# scaling como variante de envenenamiento de modelo de intensidad amplificada,
+# estudiada en un subconjunto representativo de fracciones (seccion 3.6).
+ATTACKS = (
+    [("none", 0.0)]
+    + [(attack, frac)
+       for attack in ("label_flipping", "sign_flipping")
+       for frac in (0.1, 0.2, 0.3, 0.4)]
+    + [("scaling", frac) for frac in (0.2, 0.3)]
+)
 
 
 def build_matrix(dataset: str, rounds: int | None = None) -> list[dict]:
@@ -50,23 +59,34 @@ def build_matrix(dataset: str, rounds: int | None = None) -> list[dict]:
 
     La semilla se anade despues para que la misma configuracion cientifica
     pueda repetirse de forma controlada y agruparse bajo el mismo nombre.
+
+    Cada agregador se evalua con la politica de defensa fija conservadora
+    (seccion 3.9). Krum y Trimmed Mean se evaluan ademas con la politica
+    oracle, que ajusta sus parametros a la fraccion real de adversarios y
+    permite medir el coste de no conocerla; la mediana coordinada no tiene
+    parametros, asi que la politica no la afecta y no se duplica.
     """
     configs = []
     for partition, alpha in PARTITIONS:
         for aggregator in AGGREGATORS:
-            for attack, fraction in ATTACKS:
-                overrides = {
-                    "dataset": dataset,
-                    "partition_type": partition,
-                    "aggregator": aggregator,
-                    "attack_type": attack,
-                    "malicious_fraction": fraction,
-                }
-                if alpha is not None:
-                    overrides["dirichlet_alpha"] = alpha
-                if rounds is not None:
-                    overrides["num_rounds"] = rounds
-                configs.append(_deep_merge(DEFAULTS, overrides))
+            policies = ["fixed"]
+            if aggregator in ("krum", "trimmed_mean"):
+                policies.append("oracle")
+            for policy in policies:
+                for attack, fraction in ATTACKS:
+                    overrides = {
+                        "dataset": dataset,
+                        "partition_type": partition,
+                        "aggregator": aggregator,
+                        "attack_type": attack,
+                        "malicious_fraction": fraction,
+                        "aggregator_params": {"policy": policy},
+                    }
+                    if alpha is not None:
+                        overrides["dirichlet_alpha"] = alpha
+                    if rounds is not None:
+                        overrides["num_rounds"] = rounds
+                    configs.append(_deep_merge(DEFAULTS, overrides))
     return configs
 
 

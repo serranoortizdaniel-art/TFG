@@ -8,8 +8,8 @@ Genera en results/processed/:
                          * drop_vs_clean_fedavg: respecto a FedAvg sin ataque
                            (misma particion y dataset) -> impacto del ataque
                          * drop_vs_clean_same_agg: respecto al MISMO agregador
-                           sin ataque -> separa el coste de sobreproteccion
-                           de la defensa del dano causado por el ataque
+                           y la MISMA politica sin ataque -> separa el coste de
+                           sobreproteccion de la defensa del dano del ataque
 
 Uso:  python -m src.analysis.aggregate_results [--results-dir results/raw]
 """
@@ -23,7 +23,8 @@ import pandas as pd
 
 from src.analysis.common import load_rounds, load_runs
 
-GROUP_COLS = ["dataset", "partition", "attack", "malicious_pct", "aggregator"]
+GROUP_COLS = ["dataset", "partition", "attack", "malicious_pct", "aggregator",
+              "policy"]
 
 
 def summarize(runs: pd.DataFrame) -> pd.DataFrame:
@@ -48,9 +49,11 @@ def summarize(runs: pd.DataFrame) -> pd.DataFrame:
     clean_fedavg = (summary[(summary["attack"] == "none")
                             & (summary["aggregator"] == "fedavg")]
                     .set_index(["dataset", "partition"])["accuracy_mean"])
-    # Linea base por agregador: el mismo agregador sin ataque
+    # Linea base por agregador y politica: el mismo agregador sin ataque con su
+    # misma politica de defensa, para medir el coste de sobreproteccion contra
+    # la referencia correcta (la fija frente a la fija, la oracle frente a la oracle)
     clean_same = (summary[summary["attack"] == "none"]
-                  .set_index(["dataset", "partition", "aggregator"])
+                  .set_index(["dataset", "partition", "aggregator", "policy"])
                   ["accuracy_mean"])
 
     def lookup(index, series):
@@ -64,8 +67,8 @@ def summarize(runs: pd.DataFrame) -> pd.DataFrame:
         lambda r: lookup((r["dataset"], r["partition"]), clean_fedavg)
         - r["accuracy_mean"], axis=1)
     summary["drop_vs_clean_same_agg"] = summary.apply(
-        lambda r: lookup((r["dataset"], r["partition"], r["aggregator"]),
-                         clean_same) - r["accuracy_mean"], axis=1)
+        lambda r: lookup((r["dataset"], r["partition"], r["aggregator"],
+                          r["policy"]), clean_same) - r["accuracy_mean"], axis=1)
     return summary.sort_values(GROUP_COLS).reset_index(drop=True)
 
 

@@ -3,7 +3,8 @@
 El cliente malicioso amplifica su actualizacion local por un factor
 constante (delta -> factor * delta) para dominar la media ponderada del
 servidor. Es la forma mas simple de "model replacement / boosting"
-(Bagdasaryan et al., 2020). Extension opcional de la metodologia.
+(Bagdasaryan et al., 2020). Variante de alta intensidad del
+envenenamiento de modelo evaluada en la matriz experimental.
 """
 
 from __future__ import annotations

@@ -86,6 +86,9 @@ def load_runs(results_dir: str | Path = "results/raw") -> pd.DataFrame:
             "attack": metadata["attack_type"],
             "malicious_pct": int(round(metadata["malicious_fraction"] * 100)),
             "aggregator": metadata["aggregator"],
+            # Politica de defensa (fija/oracle): distingue configuraciones que
+            # comparten agregador pero ajustan sus parametros de forma distinta.
+            "policy": metadata.get("defense_policy", {}).get("policy", "fixed"),
             "seed": metadata["seed"],
             "num_rounds": metadata["num_rounds"],
             "final_accuracy": metadata["final_test_accuracy"],
@@ -115,6 +118,7 @@ def load_rounds(results_dir: str | Path = "results/raw") -> pd.DataFrame:
         df["attack"] = metadata["attack_type"]
         df["malicious_pct"] = int(round(metadata["malicious_fraction"] * 100))
         df["aggregator"] = metadata["aggregator"]
+        df["policy"] = metadata.get("defense_policy", {}).get("policy", "fixed")
         df["seed"] = metadata["seed"]
         frames.append(df)
     if not frames:
